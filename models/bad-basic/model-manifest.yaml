@@ -1,0 +1,70 @@
+version: 1
+model: RetailBadBasic
+scenario: bad-basic
+derived_from: models/baseline-clean/model-manifest.yaml
+synthetic_data:
+  inherit_baseline: true
+  transaction_guid_distinct_ratio: '>=0.95'
+mutations:
+- id: AP-SCH-001
+  targets:
+  - Sales_Final_v2
+  change: Flatten customer, product, and selected store descriptive attributes into the large sales fact-like table.
+- id: AP-SCH-003
+  targets:
+  - Sales_Final_v2[Freight]
+  change: Repeat order-header Freight on every order-line row.
+- id: AP-REL-001
+  targets:
+  - TEMP_Customer -> Sales_Final_v2
+  change: Set Customer-to-Sales cross-filter direction to Both.
+- id: AP-DATE-001
+  targets:
+  - Model
+  change: Omit DimDate and use Sales_Final_v2[OrderDate] directly.
+- id: AP-COL-001
+  targets:
+  - Sales_Final_v2[TransactionGUID]
+  change: Retain a near-unique text GUID on the large imported fact-like table.
+- id: AP-COL-002
+  targets:
+  - Sales_Final_v2[LoadTimestamp]
+  change: Import an audit load timestamp that has no analytical dependency.
+- id: AP-COL-003
+  targets:
+  - Sales_Final_v2[ProductKey]
+  change: Store ProductKey as text rather than int64.
+- id: AP-CALC-001
+  targets:
+  - Sales_Final_v2[LineValue]
+  change: Create a calculated column Quantity * UnitPrice on the large fact-like table.
+- id: AP-CALC-003
+  targets:
+  - Sales_Final_v2[SalesAmount]
+  change: Expose raw aggregatable numeric columns and provide very few explicit measures.
+- id: AP-META-001
+  targets:
+  - TEMP_Customer
+  - DimProductCopy
+  - Sales_Final_v2
+  change: Use technical, temporary, copy, and versioned names.
+- id: AP-META-002
+  targets:
+  - Sales_Final_v2[CustomerKey]
+  change: Keep a relationship-only technical key visible.
+- id: AP-META-003
+  targets:
+  - Sales_Final_v2
+  change: Leave the main fact-like table description empty.
+- id: AP-META-005
+  targets:
+  - '[Total Sales Raw]'
+  change: Leave a business measure with General formatting.
+required_tables:
+- Sales_Final_v2
+- TEMP_Customer
+- DimProductCopy
+- DimStore
+preserved_clean_controls:
+- DimStore[StoreKey]
+- '[Net Sales]'
