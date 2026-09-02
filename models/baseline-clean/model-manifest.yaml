@@ -1,0 +1,136 @@
+version: 1
+model: RetailBaselineClean
+scenario: baseline-clean
+purpose: Known-good Retail semantic model used as the control for V1 anti-pattern mutations
+synthetic_data:
+  sales_rows: 100000
+  customers: 10000
+  products: 1000
+  stores: 50
+  deterministic_seed: 20260902
+tables:
+- name: DimDate
+  role: dimension
+  description: Conformed calendar dimension.
+  key: DateKey
+  columns:
+  - name: DateKey
+    data_type: int64
+    hidden: true
+  - name: Date
+    data_type: date
+    hidden: false
+  - name: Year
+    data_type: int64
+    hidden: false
+  - name: MonthName
+    data_type: string
+    hidden: false
+- name: DimCustomer
+  role: dimension
+  description: Customer dimension.
+  key: CustomerKey
+  columns:
+  - name: CustomerKey
+    data_type: int64
+    hidden: true
+  - name: CustomerName
+    data_type: string
+    hidden: false
+  - name: CustomerSegment
+    data_type: string
+    hidden: false
+- name: DimProduct
+  role: dimension
+  description: Product dimension.
+  key: ProductKey
+  columns:
+  - name: ProductKey
+    data_type: int64
+    hidden: true
+  - name: ProductName
+    data_type: string
+    hidden: false
+  - name: ProductCategory
+    data_type: string
+    hidden: false
+- name: DimStore
+  role: dimension
+  description: Store dimension retained as a clean control in V1.
+  key: StoreKey
+  columns:
+  - name: StoreKey
+    data_type: int64
+    hidden: true
+  - name: StoreName
+    data_type: string
+    hidden: false
+  - name: StoreCity
+    data_type: string
+    hidden: false
+  - name: StoreRegion
+    data_type: string
+    hidden: false
+- name: FactSales
+  role: fact
+  description: Order-line sales fact at one row per order line.
+  grain: order_line
+  columns:
+  - name: SalesKey
+    data_type: int64
+    hidden: true
+  - name: DateKey
+    data_type: int64
+    hidden: true
+  - name: CustomerKey
+    data_type: int64
+    hidden: true
+  - name: ProductKey
+    data_type: int64
+    hidden: true
+  - name: StoreKey
+    data_type: int64
+    hidden: true
+  - name: OrderNumber
+    data_type: string
+    hidden: false
+  - name: Quantity
+    data_type: int64
+    hidden: true
+  - name: UnitPrice
+    data_type: decimal
+    hidden: true
+  - name: SalesAmount
+    data_type: decimal
+    hidden: true
+relationships:
+- from: DimDate[DateKey]
+  to: FactSales[DateKey]
+  cardinality: 1:*
+  cross_filter: oneDirection
+  active: true
+- from: DimCustomer[CustomerKey]
+  to: FactSales[CustomerKey]
+  cardinality: 1:*
+  cross_filter: oneDirection
+  active: true
+- from: DimProduct[ProductKey]
+  to: FactSales[ProductKey]
+  cardinality: 1:*
+  cross_filter: oneDirection
+  active: true
+- from: DimStore[StoreKey]
+  to: FactSales[StoreKey]
+  cardinality: 1:*
+  cross_filter: oneDirection
+  active: true
+date_table:
+  table: DimDate
+  date_column: DimDate[Date]
+  marked: true
+measures:
+- name: Net Sales
+  table: FactSales
+  expression: SUM(FactSales[SalesAmount])
+  format_string: $#,0.00
+  description: Total net sales amount.
