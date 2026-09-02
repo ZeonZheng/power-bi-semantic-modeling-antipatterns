@@ -1,0 +1,271 @@
+version: 1
+purpose: Controlled negative-test catalog for Power BI semantic model scanners
+warning: These are intentionally bad design patterns, not production recommendations.
+
+antipatterns:
+  - id: AP-SCH-001
+    family: schema
+    name: Flat Mega Table
+    severity: Warning
+    inject: Flatten fact and dimension attributes into one wide high-row-count table.
+    detect:
+      - wide fact-like table
+      - many descriptive text columns on large table
+      - very few dimension tables
+    remediate: Split into a star schema with facts and dimensions.
+
+  - id: AP-SCH-003
+    family: schema
+    name: Inconsistent Fact Grain
+    severity: Error
+    inject: Mix header-level and line-level values in one fact table and repeat header amounts across detail rows.
+    detect:
+      - mixed natural grain indicators
+      - repeated higher-grain additive values
+    remediate: Separate facts by grain or explicitly allocate values.
+
+  - id: AP-SCH-005
+    family: schema
+    name: Duplicate Dimensions
+    severity: Warning
+    inject: Create near-identical Customer or Product dimensions for different facts.
+    detect:
+      - highly overlapping dimension structures
+      - duplicate business entity tables
+    remediate: Reuse conformed dimensions.
+
+  - id: AP-REL-001
+    family: relationships
+    name: Unnecessary Bidirectional Filtering
+    severity: Error
+    inject: Set ordinary dimension-to-fact relationships to Both.
+    detect:
+      - bidirectional relationship
+    remediate: Prefer single direction from dimension to fact.
+
+  - id: AP-REL-002
+    family: relationships
+    name: Many-to-Many Shortcut
+    severity: Error
+    inject: Directly connect business entities with many-to-many cardinality instead of a proper bridge.
+    detect:
+      - many-to-many cardinality
+    remediate: Introduce a bridge and explicit semantics.
+
+  - id: AP-REL-003
+    family: relationships
+    name: Fact-to-Fact Relationship
+    severity: Error
+    inject: Directly relate two high-row-count transaction tables.
+    detect:
+      - both endpoints appear fact-like
+    remediate: Connect facts through shared dimensions.
+
+  - id: AP-REL-004
+    family: relationships
+    name: One-to-One Misuse
+    severity: Warning
+    inject: Split one logical entity into two tables connected 1:1 without a strong reason.
+    detect:
+      - one-to-one relationship
+      - matching entity grain
+    remediate: Merge attributes when appropriate.
+
+  - id: AP-REL-005
+    family: relationships
+    name: Ambiguous Relationship Paths
+    severity: Error
+    inject: Create multiple active filter paths between logical entities.
+    detect:
+      - graph has multiple active paths
+    remediate: Redesign relationship topology.
+
+  - id: AP-REL-006
+    family: relationships
+    name: Relationship on Descriptive Text
+    severity: Warning
+    inject: Relate tables using mutable descriptive text rather than compact keys.
+    detect:
+      - relationship column is long text
+    remediate: Use stable compact keys.
+
+  - id: AP-DATE-001
+    family: date
+    name: No Proper Date Dimension
+    severity: Error
+    inject: Use fact date columns directly and omit a dedicated marked date table.
+    detect:
+      - multiple dates but no date dimension
+    remediate: Create a contiguous reusable date dimension.
+
+  - id: AP-DATE-002
+    family: date
+    name: Auto Date-Time Proliferation
+    severity: Warning
+    inject: Retain automatic local date tables for many date columns.
+    detect:
+      - many hidden local date tables
+    remediate: Use a shared managed date dimension.
+
+  - id: AP-DATE-003
+    family: date
+    name: Poor Role-Playing Date Design
+    severity: Warning
+    inject: Add multiple inactive date relationships without clear role-specific measures or naming.
+    detect:
+      - multiple inactive relationships to same date table
+    remediate: Deliberately model date roles.
+
+  - id: AP-COL-001
+    family: storage
+    name: High-Cardinality Text in Large Fact
+    severity: Warning
+    inject: Keep GUIDs, URLs, comments, or near-unique text on a large imported fact table.
+    detect:
+      - text cardinality close to row count
+    remediate: Remove or replace with compact keys where possible.
+
+  - id: AP-COL-002
+    family: storage
+    name: Unused Imported Columns
+    severity: Warning
+    inject: Import audit fields, notes, timestamps, and unused source IDs.
+    detect:
+      - no dependency or analytical use
+    remediate: Remove unused columns early.
+
+  - id: AP-COL-003
+    family: storage
+    name: Wrong Data Type
+    severity: Warning
+    inject: Store numeric keys/dates as text or use wider numeric types than needed.
+    detect:
+      - value pattern inconsistent with semantic type
+    remediate: Use the narrowest correct type.
+
+  - id: AP-COL-004
+    family: storage
+    name: Excessive Precision
+    severity: Info
+    inject: Preserve decimal precision well beyond business requirements.
+    detect:
+      - unnecessarily precise decimal values
+    remediate: Round when business requirements allow.
+
+  - id: AP-COL-005
+    family: storage
+    name: Redundant Derived Columns
+    severity: Warning
+    inject: Duplicate Year/Month/Quarter and other derivable labels across large facts.
+    detect:
+      - numerous redundant derived columns
+    remediate: Centralize attributes in dimensions.
+
+  - id: AP-CALC-001
+    family: calculations
+    name: Avoidable Calculated Column
+    severity: Warning
+    inject: Add materialized row-by-row calculations to large fact tables.
+    detect:
+      - calculated column on large fact
+    remediate: Prefer upstream transforms or measures as appropriate.
+
+  - id: AP-CALC-002
+    family: calculations
+    name: Unnecessary Calculated Table
+    severity: Warning
+    inject: Create DAX tables duplicating imported or easily modeled data.
+    detect:
+      - calculated table duplicates existing data
+    remediate: Use appropriate ingestion/modeling layer.
+
+  - id: AP-CALC-003
+    family: calculations
+    name: Implicit Measures Everywhere
+    severity: Warning
+    inject: Expose raw numeric fact columns and create few explicit measures.
+    detect:
+      - many visible aggregatable columns
+      - low explicit measure count
+    remediate: Create governed explicit measures.
+
+  - id: AP-CALC-004
+    family: calculations
+    name: Duplicate Measures
+    severity: Warning
+    inject: Create multiple equivalent measures under different names.
+    detect:
+      - identical normalized DAX
+    remediate: Reuse canonical measures.
+
+  - id: AP-CALC-005
+    family: calculations
+    name: Expensive Full-Table Iterator
+    severity: Warning
+    inject: Use iterator-heavy DAX over large facts where simpler aggregation would suffice.
+    detect:
+      - SUMX/FILTER over whole large table
+    remediate: Simplify DAX and model shape.
+
+  - id: AP-META-001
+    family: metadata
+    name: Technical or Temporary Names
+    severity: Warning
+    inject: Use names such as Table1, STG_SALES_FINAL2, TEMP_CUSTOMER, DimCustomerCopy, col1, Measure 7.
+    detect:
+      - technical prefix or generic naming pattern
+    remediate: Use stable business-oriented names.
+
+  - id: AP-META-002
+    family: metadata
+    name: Exposed Technical Keys
+    severity: Info
+    inject: Keep relationship-only key fields visible.
+    detect:
+      - visible key used only for relationship
+    remediate: Hide technical fields not intended for reports.
+
+  - id: AP-META-003
+    family: metadata
+    name: Missing Descriptions
+    severity: Info
+    inject: Leave descriptions empty for tables, measures, and important columns.
+    detect:
+      - blank descriptions
+    remediate: Document semantic meaning and calculation intent.
+
+  - id: AP-META-004
+    family: metadata
+    name: Poor Measure Organization
+    severity: Info
+    inject: Scatter measures across tables with no display folders.
+    detect:
+      - blank display folders and inconsistent placement
+    remediate: Apply a consistent measure organization strategy.
+
+  - id: AP-META-005
+    family: metadata
+    name: Inconsistent Formatting
+    severity: Info
+    inject: Leave business measures with General or inconsistent formats.
+    detect:
+      - blank/default/inconsistent format strings
+    remediate: Apply intentional semantic formatting.
+
+  - id: AP-SEC-001
+    family: security
+    name: Ad-Hoc Complex RLS
+    severity: Warning
+    inject: Spread complex security expressions across unrelated tables.
+    detect:
+      - complex multi-table RLS filters
+    remediate: Use a clear security mapping model.
+
+  - id: AP-SEC-002
+    family: security
+    name: Fact-Level RLS When Dimension Security Suffices
+    severity: Warning
+    inject: Apply RLS directly to a large fact instead of a suitable dimension.
+    detect:
+      - RLS on high-row-count fact
+    remediate: Prefer dimension-based security where appropriate.
