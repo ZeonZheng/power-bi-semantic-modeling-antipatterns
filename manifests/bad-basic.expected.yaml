@@ -1,0 +1,98 @@
+version: 1
+scenario: bad-basic
+model: RetailBadBasic
+expected_findings:
+- id: AP-SCH-001
+  severity: Warning
+  object_type: table
+  object: Sales_Final_v2
+  evidence:
+    wide_fact_like_table: true
+    descriptive_attributes_on_fact: true
+- id: AP-SCH-003
+  severity: Error
+  object_type: column
+  object: Sales_Final_v2[Freight]
+  evidence:
+    grain: order_line
+    header_amount_repeated: true
+- id: AP-REL-001
+  severity: Error
+  object_type: relationship
+  object: TEMP_Customer -> Sales_Final_v2
+  evidence:
+    cross_filtering_behavior: bothDirections
+- id: AP-DATE-001
+  severity: Error
+  object_type: model
+  object: Model
+  evidence:
+    dedicated_date_dimension: false
+- id: AP-COL-001
+  severity: Warning
+  object_type: column
+  object: Sales_Final_v2[TransactionGUID]
+  evidence:
+    data_type: string
+    expected_cardinality_ratio: '>=0.95'
+- id: AP-COL-002
+  severity: Warning
+  object_type: column
+  object: Sales_Final_v2[LoadTimestamp]
+  evidence:
+    analytical_dependency: false
+- id: AP-COL-003
+  severity: Warning
+  object_type: column
+  object: Sales_Final_v2[ProductKey]
+  evidence:
+    data_type: string
+    semantic_type: integer_key
+- id: AP-CALC-001
+  severity: Warning
+  object_type: calculated_column
+  object: Sales_Final_v2[LineValue]
+  evidence:
+    expression: '[Quantity] * [UnitPrice]'
+- id: AP-CALC-003
+  severity: Warning
+  object_type: column
+  object: Sales_Final_v2[SalesAmount]
+  evidence:
+    visible_aggregatable_column: true
+    explicit_measure_count: low
+- id: AP-META-001
+  severity: Warning
+  object_type: table
+  object: TEMP_Customer
+  evidence:
+    name_pattern: TEMP_
+- id: AP-META-002
+  severity: Info
+  object_type: column
+  object: Sales_Final_v2[CustomerKey]
+  evidence:
+    relationship_only_key_visible: true
+- id: AP-META-003
+  severity: Info
+  object_type: table
+  object: Sales_Final_v2
+  evidence:
+    description: empty
+- id: AP-META-005
+  severity: Info
+  object_type: measure
+  object: '[Total Sales Raw]'
+  evidence:
+    format_string: General
+clean_controls:
+- object: DimStore[StoreKey]
+  object_type: column
+  expectations:
+    data_type: int64
+    hidden: true
+- object: '[Net Sales]'
+  object_type: measure
+  expectations:
+    explicit_measure: true
+    format_string: $#,0.00
