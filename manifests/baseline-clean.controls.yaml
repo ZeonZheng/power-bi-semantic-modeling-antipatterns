@@ -1,0 +1,25 @@
+version: 1
+scenario: baseline-clean
+clean_controls:
+- object: DimStore[StoreKey]
+  object_type: column
+  expectations:
+    data_type: int64
+    hidden: true
+- object: '[Net Sales]'
+  object_type: measure
+  expectations:
+    explicit_measure: true
+    format_string: $#,0.00
+    description: non_empty
+- object: DimStore -> FactSales
+  object_type: relationship
+  expectations:
+    cardinality: 1:*
+    cross_filter: oneDirection
+    active: true
+- object: DimDate
+  object_type: table
+  expectations:
+    marked_date_table: true
+    description: non_empty
